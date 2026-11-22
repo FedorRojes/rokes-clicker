@@ -1,0 +1,719 @@
+<!doctype html>
+
+<html lang="ru">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
+<meta name="theme-color" content="#111629">
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<title>Fedor Coin</title>
+
+<style>
+
+*{box-sizing:border-box}
+
+body{margin:0;background:radial-gradient(ellipse at top,#29345e,#101426 65%);color:#fff;font-family:system-ui,Arial;padding:env(safe-area-inset-top) 15px 95px}
+
+.app{max-width:520px;margin:auto}
+
+header{display:flex;justify-content:space-between;padding:16px 3px;font-weight:900;font-size:20px}
+
+.pill{background:#303b60;border-radius:20px;padding:7px 12px;font-size:12px}
+
+.balance{text-align:center;padding:15px}
+
+.muted{color:#aab4d0;font-size:12px}
+
+.coins{font-size:42px;color:#ffd45c;font-weight:900}
+
+.rate{color:#6ee7a8;font-size:13px}
+
+.taparea{display:grid;place-items:center;padding:18px}
+
+.coin{width:min(65vw,250px);height:min(65vw,250px);border-radius:50%;border:8px solid #ffec9e;background:radial-gradient(circle at 35% 25%,#fff3b8,#ffc43e 55%,#a85e14);box-shadow:0 0 0 9px #ffd45c30,0 18px 35px #0008,inset 0 5px 12px #fff9;color:#75400d;font-size:75px;font-weight:1000;touch-action:manipulation}
+
+.coin:active{transform:scale(.94)}
+
+.energy,.card{background:#202a49;border:1px solid #39466d;border-radius:17px;padding:14px;margin:10px 0}
+
+.energytop{display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px}
+
+.bar{height:9px;background:#11182d;border-radius:20px;overflow:hidden}
+
+.bar div{height:100%;background:linear-gradient(90deg,#a27aff,#5fe0d0);width:100%}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.stat{background:#202a49;border-radius:15px;padding:13px}
+
+.stat b{display:block;font-size:20px}
+
+.page{display:none}
+
+.page.active{display:block}
+
+.title{font-size:20px;font-weight:900;margin:17px 2px}
+
+.item{display:flex;align-items:center;gap:10px}
+
+.emoji{font-size:25px;background:#303b60;border-radius:12px;padding:10px}
+
+.grow{flex:1}
+
+.desc{color:#aab4d0;font-size:12px;margin-top:3px}
+
+.price{color:#ffd45c;font-size:12px;margin-top:5px}
+
+button{font:inherit;color:white;border:0;cursor:pointer;touch-action:manipulation}
+
+.buy{background:linear-gradient(135deg,#9b78ff,#6e51d9);border-radius:12px;padding:11px;font-weight:800}
+
+.buy:disabled{opacity:.4}
+
+.nav{position:fixed;bottom:0;left:0;right:0;display:flex;gap:7px;padding:9px 10px calc(9px + env(safe-area-inset-bottom));background:#11182aee;border-top:1px solid #344064;max-width:520px;margin:auto}
+
+.nav button{flex:1;background:#242e4c;border-radius:13px;padding:10px 3px;font-size:11px}
+
+.nav button.active{background:#7658d8}
+
+.nav span{display:block;font-size:19px}
+
+.notice{text-align:center;color:#aab4d0;font-size:12px;min-height:18px}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="app">
+
+<header>🪙 FEDOR COIN <span class="pill" id="level">LEVEL 1</span></header>
+
+<section id="home" class="page active">
+
+<div class="balance">
+
+<div class="muted">ТВОИ МОНЕТЫ</div>
+
+<div class="coins" id="coins">0</div>
+
+<div class="rate" id="rate">+0 монет / час</div>
+
+</div>
+
+<div class="taparea">
+
+<button type="button" class="coin" id="tap">R</button>
+
+</div>
+
+<div class="energy">
+
+<div class="energytop"><b>⚡ Энергия</b><span id="energyText">1000 / 1000</span></div>
+
+<div class="bar"><div id="energyBar"></div></div>
+
+</div>
+
+<div class="stats">
+
+<div class="stat"><b id="powerText">+1</b><span class="muted">ЗА НАЖАТИЕ</span></div>
+
+<div class="stat"><b id="incomeText">0</b><span class="muted">МОНЕТ / ЧАС</span></div>
+
+</div>
+
+<div class="notice" id="notice">Тапай по монете и копи состояние!</div>
+
+</section>
+
+<section id="mine" class="page">
+
+<div class="title">⛏️ Прокачка</div>
+
+<div class="card item">
+
+<div class="emoji">👆</div>
+
+<div class="grow"><b>Сила клика</b><div class="desc">Больше монет за тап</div><div class="price" id="tapCost">50 монет</div></div>
+
+<button type="button" class="buy" id="buyTap">Улучшить</button>
+
+</div>
+
+<div class="card item">
+
+<div class="emoji">🖥️</div>
+
+<div class="grow"><b>Майнинг-ферма</b><div class="desc">+120 монет в час</div><div class="price" id="farmCost">200 монет</div></div>
+
+<button type="button" class="buy" id="buyFarm">Улучшить</button>
+
+</div>
+
+<div class="card item">
+
+<div class="emoji">🔋</div>
+
+<div class="grow"><b>Больше энергии</b><div class="desc">+500 к запасу энергии</div><div class="price" id="energyCost">300 монет</div></div>
+
+<button type="button" class="buy" id="buyEnergy">Улучшить</button>
+
+</div>
+
+</section>
+
+<section id="tasks" class="page">
+
+<div class="title">🎯 Задания</div>
+
+<div class="card item">
+
+<div class="grow"><b>Первый запуск</b><div class="desc" id="tapProgress">Сделай 10 нажатий: 0/10</div></div>
+
+<button type="button" class="buy" id="claimTap">Забрать 100</button>
+
+</div>
+
+<div class="card item">
+
+<div class="grow"><b>Начинающий майнер</b><div class="desc" id="upgradeProgress">Купи улучшение</div></div>
+
+<button type="button" class="buy" id="claimUpgrade">Забрать 150</button>
+
+</div>
+
+<div class="card" style="text-align:center">
+
+<h3>🎁 Ежедневный бонус</h3>
+
+<div class="desc">Награда раз в 24 часа</div>
+
+<button type="button" class="buy" id="daily">Получить 250</button>
+
+</div>
+
+</section>
+
+<section id="profile" class="page">
+
+<div class="title">👤 Профиль</div>
+
+<div class="card">
+
+<h3 id="player">Игрок</h3>
+
+<div class="stats">
+
+<div class="stat"><b id="taps">0</b><span class="muted">НАЖАТИЙ</span></div>
+
+<div class="stat"><b id="upgrades">0</b><span class="muted">УЛУЧШЕНИЙ</span></div>
+
+</div>
+
+</div>
+
+<div class="title">🎟️ Промокод</div>
+
+<div class="card">
+
+<div class="desc">Введи промокод и получи награду</div>
+
+<input id="promoInput" type="text" maxlength="32" autocomplete="off" autocapitalize="characters" placeholder="Введи промокод" style="width:100%;margin:12px 0;padding:14px;border-radius:12px;border:1px solid #536184;background:#11182d;color:white;font:inherit;text-transform:none">
+
+<button type="button" class="buy" id="promoApply" style="width:100%">Активировать</button>
+
+<div class="notice" id="promoMessage" aria-live="polite"></div>
+
+</div>
+
+<div class="title">🤝 Реферальная программа</div>
+
+<div class="card">
+
+<b>Приглашай друзей в Fedor Coin</b>
+
+<div class="desc" style="margin:8px 0 12px">Поделись своей персональной ссылкой. Начисление наград за приглашённых друзей включается после подключения серверной проверки Telegram.</div>
+
+<div class="desc" id="refLink" style="word-break:break-all;color:#d7dfff">Загружаем ссылку…</div>
+
+<button type="button" class="buy" id="shareRef" style="width:100%;margin-top:12px">Скопировать ссылку</button>
+
+<div class="notice" id="refMessage" aria-live="polite"></div>
+
+</div>
+
+<div class="card desc">Сейчас прогресс и промокод сохраняются на этом устройстве. Для защиты от повторного ввода с другого устройства и настоящего учёта приглашённых нужен сервер.</div>
+
+</section>
+
+</div>
+
+<nav class="nav">
+
+<button type="button" class="active" data-page="home"><span>🪙</span>Клик</button>
+
+<button type="button" data-page="mine"><span>⛏️</span>Прокачка</button>
+
+<button type="button" data-page="tasks"><span>🎯</span>Задания</button>
+
+<button type="button" data-page="profile"><span>👤</span>Профиль</button>
+
+</nav>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function () {
+
+'use strict';
+
+var $ = function(id){ return document.getElementById(id); };
+
+var KEY = 'rokesCoinRushSave_v2';
+
+var state = {
+
+coins:0,power:1,income:0,energy:1000,max:1000,
+
+taps:0,upgrades:0,last:Date.now(),daily:0,
+
+claimTap:false,claimUpgrade:false
+
+};
+
+try {
+
+var saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+
+if (saved && typeof saved === 'object')
+
+Object.keys(state).forEach(function(k){
+
+if(saved[k] !== undefined) state[k]=saved[k];
+
+});
+
+} catch(e) {}
+
+var elapsed = Math.max(0, Math.min(7*24*60*60*1000, Date.now()-Number(state.last||Date.now())));
+
+state.coins += elapsed * state.income / 3600000;
+
+state.last = Date.now();
+
+var message = $('notice');
+
+function number(n){ return Math.floor(n).toLocaleString('ru-RU'); }
+
+function tapCost(){ return Math.floor(50 * Math.pow(1.65, state.power-1)); }
+
+function farmCost(){ return Math.floor(200 * Math.pow(1.7, state.upgrades)); }
+
+function energyCost(){ return Math.floor(300 * Math.pow(1.8, Math.max(0,(state.max-1000)/500))); }
+
+function save(){
+
+state.last=Date.now();
+
+try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
+
+}
+
+function say(t){ if(message) message.textContent=t; }
+
+function render(){
+
+$('coins').textContent=number(state.coins);
+
+$('rate').textContent='+'+number(state.income)+' монет / час';
+
+$('powerText').textContent='+'+state.power;
+
+$('incomeText').textContent=number(state.income);
+
+$('energyText').textContent=number(state.energy)+' / '+number(state.max);
+
+$('energyBar').style.width=Math.max(0,Math.min(100,100*state.energy/state.max))+'%';
+
+$('tapCost').textContent=number(tapCost())+' монет';
+
+$('farmCost').textContent=number(farmCost())+' монет';
+
+$('energyCost').textContent=number(energyCost())+' монет';
+
+$('buyTap').disabled=state.coins<tapCost();
+
+$('buyFarm').disabled=state.coins<farmCost();
+
+$('buyEnergy').disabled=state.coins<energyCost();
+
+$('level').textContent='LEVEL '+(1+Math.floor(state.taps/100));
+
+$('tapProgress').textContent='Сделай 10 нажатий: '+Math.min(10,state.taps)+'/10';
+
+$('claimTap').disabled=state.taps<10||state.claimTap;
+
+$('claimTap').textContent=state.claimTap?'Получено':'Забрать 100';
+
+$('upgradeProgress').textContent=state.upgrades?'Улучшение куплено':'Купи улучшение';
+
+$('claimUpgrade').disabled=!state.upgrades||state.claimUpgrade;
+
+$('claimUpgrade').textContent=state.claimUpgrade?'Получено':'Забрать 150';
+
+$('daily').disabled=Date.now()-state.daily<86400000;
+
+$('daily').textContent=$('daily').disabled?'Уже получено':'Получить 250';
+
+$('taps').textContent=number(state.taps);
+
+$('upgrades').textContent=number(state.upgrades);
+
+}
+
+function showPage(name){
+
+document.querySelectorAll('.page').forEach(function(page){
+
+page.classList.toggle('active',page.id===name);
+
+});
+
+document.querySelectorAll('.nav button').forEach(function(btn){
+
+btn.classList.toggle('active',btn.getAttribute('data-page')===name);
+
+});
+
+}
+
+// Обработка игровых кнопок и вкладок
+
+document.addEventListener('click', function(event){
+
+var nav = event.target.closest ? event.target.closest('[data-page]') : null;
+
+if(nav){
+
+event.preventDefault();
+
+showPage(nav.getAttribute('data-page'));
+
+return;
+
+}
+
+var button = event.target.closest ? event.target.closest('button') : null;
+
+if(!button || button.disabled) return;
+
+switch(button.id){
+
+case 'tap':
+
+if(state.energy<1){
+
+say('Энергия закончилась — дождись восстановления');
+
+return;
+
+}
+
+state.coins+=state.power;
+
+state.energy-=1;
+
+state.taps+=1;
+
+save();render();
+
+say('+'+state.power+' монет!');
+
+break;
+
+case 'buyTap':
+
+if(state.coins<tapCost()) return;
+
+state.coins-=tapCost();
+
+state.power+=1;
+
+state.upgrades+=1;
+
+save();render();
+
+say('Сила клика улучшена!');
+
+break;
+
+case 'buyFarm':
+
+if(state.coins<farmCost()) return;
+
+state.coins-=farmCost();
+
+state.income+=120;
+
+state.upgrades+=1;
+
+save();render();
+
+say('Ферма приносит +120 монет в час!');
+
+break;
+
+case 'buyEnergy':
+
+if(state.coins<energyCost()) return;
+
+state.coins-=energyCost();
+
+state.max+=500;
+
+state.energy+=500;
+
+state.upgrades+=1;
+
+save();render();
+
+say('Максимальная энергия увеличена!');
+
+break;
+
+case 'claimTap':
+
+if(state.taps>=10&&!state.claimTap){
+
+state.coins+=100;state.claimTap=true;
+
+save();render();say('Награда +100 получена!');
+
+}
+
+break;
+
+case 'claimUpgrade':
+
+if(state.upgrades&&!state.claimUpgrade){
+
+state.coins+=150;state.claimUpgrade=true;
+
+save();render();say('Награда +150 получена!');
+
+}
+
+break;
+
+case 'daily':
+
+if(Date.now()-state.daily>=86400000){
+
+state.coins+=250;state.daily=Date.now();
+
+save();render();say('Ежедневный бонус +250 получен!');
+
+}
+
+break;
+
+}
+
+}, false);
+
+// Промокод и реферальная ссылка
+
+var tg = window.Telegram && window.Telegram.WebApp;
+
+var telegramUser = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+
+var promoStorageKey = 'fedorCoinPromoUsed_v1_' +
+
+(telegramUser && telegramUser.id ? telegramUser.id : 'local');
+
+function setPromoMessage(text, ok){
+
+var el = $('promoMessage');
+
+if(el){
+
+el.textContent=text;
+
+el.style.color=ok?'#6ee7a8':'#ff9b9b';
+
+}
+
+}
+
+function promoAlreadyUsed(){
+
+try { return localStorage.getItem(promoStorageKey)==='yes'; }
+
+catch(e) { return false; }
+
+}
+
+function activatePromo(){
+
+var input=$('promoInput');
+
+var code=(input && input.value ? input.value : '').trim().toUpperCase();
+
+if(!code){
+
+setPromoMessage('Сначала введи промокод.',false);
+
+return;
+
+}
+
+if(code!=='FEDORTOP'){
+
+setPromoMessage('Такого промокода нет.',false);
+
+return;
+
+}
+
+if(promoAlreadyUsed()){
+
+setPromoMessage('Этот промокод уже использован на этом аккаунте.',false);
+
+return;
+
+}
+
+state.coins+=10000;
+
+state.taps+=1000;
+
+try { localStorage.setItem(promoStorageKey,'yes'); }
+
+catch(e) {}
+
+save();
+
+render();
+
+setPromoMessage('Успешно! +10 000 Fedor Coin и +10 уровней.',true);
+
+if(input) input.value='';
+
+}
+
+function makeReferralLink(){
+
+var uid=telegramUser && telegramUser.id ? String(telegramUser.id) : 'guest';
+
+return 'https://t.me/rokesclickerbot?start=ref_' + encodeURIComponent(uid);
+
+}
+
+var refEl=$('refLink');
+
+if(refEl) refEl.textContent=makeReferralLink();
+
+var promoButton=$('promoApply');
+
+if(promoButton) promoButton.addEventListener('click',activatePromo);
+
+var promoInput=$('promoInput');
+
+if(promoInput) promoInput.addEventListener('keydown',function(e){
+
+if(e.key==='Enter')activatePromo();
+
+});
+
+var shareButton=$('shareRef');
+
+if(shareButton) shareButton.addEventListener('click',function(){
+
+var link=makeReferralLink();
+
+var shareText='Присоединяйся ко мне в Fedor Coin! '+link;
+
+if(tg && typeof tg.openTelegramLink==='function'){
+
+try {
+
+tg.openTelegramLink('https://t.me/share/url?url='+
+
+encodeURIComponent(link)+'&text='+
+
+encodeURIComponent('Присоединяйся ко мне в Fedor Coin!'));
+
+$('refMessage').textContent='Открылось меню отправки Telegram.';
+
+return;
+
+} catch(e) {}
+
+}
+
+if(navigator.clipboard && navigator.clipboard.writeText){
+
+navigator.clipboard.writeText(link).then(function(){
+
+$('refMessage').textContent='Ссылка скопирована!';
+
+}).catch(function(){
+
+$('refMessage').textContent=shareText;
+
+});
+
+}else{
+
+$('refMessage').textContent=shareText;
+
+}
+
+});
+
+if(tg){
+
+try{
+
+tg.ready();
+
+tg.expand();
+
+var user=tg.initDataUnsafe&&tg.initDataUnsafe.user;
+
+if(user&&user.first_name) $('player').textContent=user.first_name;
+
+}catch(e){}
+
+}
+
+window.setInterval(function(){
+
+state.energy=Math.min(state.max,state.energy+1);
+
+state.coins+=state.income/3600;
+
+save();render();
+
+},1000);
+
+save();
+
+render();
+
+say('Игра загружена — нажимай на монету!');
+
+});
+
+</script>
+
+</body>
+
+</html>
